@@ -19,34 +19,38 @@ namespace SkindleGUI
 {
     public partial class frmMain : Form
     {
-        /************************************************
-        *                                               *
-        *   Instance Variables                          *
-        *                                               *
-        ************************************************/
 
-        private Regex fileRegex;
-        private Regex bookRegex;
-        private WebClient wb; // used to fetch book images via HTTP
-        private int lastIndex = -1;
-        private string skindle_path = Path.GetTempPath() + "skindle.exe"; // store skindle.exe in temporary directory
+        #region Instance Variables
 
-        /************************************************
-        *                                               *
-        *   Constructor                                 *
-        *                                               *
-        ************************************************/
+        private Regex _fileRegex;
+        private Regex _bookRegex;
+        private int _lastIndex = -1;
+        private string _skindlePath = Path.GetTempPath() + "skindle.exe"; // store skindle.exe in temporary directory
+
+        #endregion
+
         public frmMain()
         {
             InitializeComponent();
+            WriteTemporalSkindleExecutable(GetSkindleStream());
 
-            // get assembly resource for skindle.exe -- credit to http://www.cs.nyu.edu/~vs667/articles/embed_executable_tutorial/
-            Assembly currentAssembly = Assembly.GetExecutingAssembly();
-            Stream skindleEXEStream = currentAssembly.GetManifestResourceStream("SkindleGUI.skindle.exe");
+            // setup regular expression object for matching filenames
+            _fileRegex = new Regex(@"(?<folder>[a-z]:\\(?:[^\\/:*?""<>|\r\n]+\\)*)(?<file>[^\\/:*?""<>|\r\n.]*)\.(?<extension>.+)$", RegexOptions.IgnoreCase);
+            _bookRegex = new Regex(@"(?<drive>[a-z]:)\\(?<folder>(?:[^\\/:*?""<>|\r\n]+\\)*)(?<book>[^\\/:*?""<>|\r\n.]*)_EBOK\.(?<extension>.+)$", RegexOptions.IgnoreCase);
 
-            // open output file for skindle.exe
-            FileInfo fileInfoOutputFile = new FileInfo(skindle_path);
-            FileStream outputStream = fileInfoOutputFile.OpenWrite();
+            // determine path to "My Kindle Content" within My Documents folder and set it as default input directory
+            string myDocsPath = Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+            string kindlePath = myDocsPath + "\\My Kindle Content\\";
+            txtInput.Text = kindlePath;            
+        }
+
+        /// <summary>
+        /// Creates a temporal executable of Skindle from the embedded resource
+        /// </summary>
+        /// <param name="skindleEXEStream">Skindle's stream</param>
+        private void WriteTemporalSkindleExecutable(Stream skindleEXEStream)
+        {
+            var outputStream = new FileInfo(_skindlePath).OpenWrite();
 
             // read from embedded resource and write to output file
             const int size = 4096;
@@ -58,19 +62,12 @@ namespace SkindleGUI
             }
             outputStream.Close();
             skindleEXEStream.Close();
-
-            // setup regular expression object for matching filenames
-            fileRegex = new Regex(@"(?<folder>[a-z]:\\(?:[^\\/:*?""<>|\r\n]+\\)*)(?<file>[^\\/:*?""<>|\r\n.]*)\.(?<extension>.+)$", RegexOptions.IgnoreCase);
-            bookRegex = new Regex(@"(?<drive>[a-z]:)\\(?<folder>(?:[^\\/:*?""<>|\r\n]+\\)*)(?<book>[^\\/:*?""<>|\r\n.]*)_EBOK\.(?<extension>.+)$", RegexOptions.IgnoreCase);
-
-            // initialize webclient object
-            wb = new WebClient();
-
-            // determine path to "My Kindle Content" within My Documents folder and set it as default input directory
-            string myDocsPath = Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
-            string kindlePath = myDocsPath + "\\My Kindle Content\\";
-            txtInput.Text = kindlePath;            
         }
+
+        /// <summary>
+        /// Get assembly resource for skindle.exe -- credit to http://www.cs.nyu.edu/~vs667/articles/embed_executable_tutorial/
+        /// </summary>
+        private Func<Stream> GetSkindleStream = () => Assembly.GetExecutingAssembly().GetManifestResourceStream("SkindleGUI.skindle.exe");
 
         private void UpdateText(Book book)
         {
@@ -80,6 +77,10 @@ namespace SkindleGUI
             lstBooks.EndUpdate();
         }
 
+        /// <summary>
+        /// Looks for a book's title on Amazon
+        /// </summary>
+        /// <param name="book">Book which title is requested</param>
         private void SetBookName(object book)
         {
             Book b = (Book)book;
@@ -95,9 +96,13 @@ namespace SkindleGUI
             catch (WebException) { this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Title not found for book " + b.FileName); }); }
         }
 
+        /// <summary>
+        /// Tries to set all possible information for a book
+        /// </summary>
+        /// <param name="book">The book with its FilePath set</param>
         private void SetBookInfo(Book book)
         {
-            Match match = fileRegex.Match(book.FilePath);
+            Match match = _fileRegex.Match(book.FilePath);
             string extension = match.Groups["extension"].Value;
             if (extension == "azw" || extension == "tpz")
             {
@@ -107,9 +112,12 @@ namespace SkindleGUI
             }
         }
 
-        private void loadBookNames()
+        /// <summary>
+        /// Searchs for books on the selected path
+        /// </summary>
+        private void LoadBooks()
         {
-            //lstBooks.Items.Clear();
+            lstBooks.Items.Clear();
             Directory.GetFiles(txtInput.Text).Select(x => new Book() { FilePath = x }).ToList().ForEach(x => SetBookInfo(x));
         }
 
@@ -121,14 +129,14 @@ namespace SkindleGUI
 
         private void lstBooks_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (lastIndex != lstBooks.SelectedIndex)
+            if (_lastIndex != lstBooks.SelectedIndex)
             {                
-                new Thread(new ParameterizedThreadStart(getCoverImage)).Start(lstBooks.SelectedItem);                
-                lastIndex = lstBooks.SelectedIndex;
+                new Thread(new ParameterizedThreadStart(GetCoverImage)).Start(lstBooks.SelectedItem);                
+                _lastIndex = lstBooks.SelectedIndex;
             }
         }
 
-        private void getCoverImage(object bookObject)
+        private void GetCoverImage(object bookObject)
         {
             if (bookObject == null) return;
             // get the book ID (in form like "B003O86FMW") from the filename (books are stored as "B003O86FMW_EBOK.azw")
@@ -240,7 +248,7 @@ namespace SkindleGUI
 
         private void btnBrowseOut_Click(object sender, EventArgs e)
         {
-            string InputExt = fileRegex.Match(txtInput.Text + lstBooks.SelectedItem).Groups["extension"].Value;
+            string InputExt = _fileRegex.Match(txtInput.Text + lstBooks.SelectedItem).Groups["extension"].Value;
             SaveFileDialog sd = new SaveFileDialog();
             if (InputExt.Equals("azw"))
                 sd.Filter = "MOBI Files|*.mobi|All Files|*.*";
@@ -282,7 +290,7 @@ namespace SkindleGUI
             
             // confirm that "skindle.exe" exists in the current directory            
             /*txtResults.Text += "Looking for skindle.exe at " + skindle_path + Environment.NewLine;*/
-            if (!File.Exists(skindle_path))
+            if (!File.Exists(_skindlePath))
             {
                 MessageBox.Show("\"skindle.exe\" file not found. It must be in the same directory as this program's executable.", "Missing Skindle Program", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -303,14 +311,14 @@ namespace SkindleGUI
             if (txtPID.Text != "")
                 RunString += "-p " + txtPID.Text + " ";
 
-            txtResults.Text += skindle_path + " " + RunString;
+            txtResults.Text += _skindlePath + " " + RunString;
 
             // make a Process object to launch skindle.exe
             Process process = new Process();
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.FileName = skindle_path;
+            process.StartInfo.FileName = _skindlePath;
             process.StartInfo.Arguments = RunString;
             // begin the launch, catching any exceptions
             try
@@ -341,10 +349,10 @@ namespace SkindleGUI
             od.Filter = "Amazon Kindle Files|*.azw|Amazon Topaz Files|*.tpz|All Files|*.*";
             if (od.ShowDialog() == DialogResult.OK)
             {
-                string folder = fileRegex.Match(od.FileName).Groups["folder"].Value;
+                string folder = _fileRegex.Match(od.FileName).Groups["folder"].Value;
                 txtInput.Text = folder;
             }
-            loadBookNames();
+            LoadBooks();
         }
 
         private void btnBrowseInfo_Click(object sender, EventArgs e)
@@ -364,13 +372,13 @@ namespace SkindleGUI
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             // delete temporary "skindle.exe" file
-            File.Delete(skindle_path);
+            File.Delete(_skindlePath);
         }
 
         private void frmMain_Load(object sender, EventArgs e)
         {
             // load listbox with files in default input directory
-            loadBookNames();
+            LoadBooks();
         }
 
         
