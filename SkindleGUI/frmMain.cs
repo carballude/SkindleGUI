@@ -11,6 +11,9 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Reflection;
+using System.Threading;
+using System.Linq;
+using SkindleGUI.Model;
 
 namespace SkindleGUI
 {
@@ -66,23 +69,48 @@ namespace SkindleGUI
             // determine path to "My Kindle Content" within My Documents folder and set it as default input directory
             string myDocsPath = Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
             string kindlePath = myDocsPath + "\\My Kindle Content\\";
-            txtInput.Text = kindlePath;
+            txtInput.Text = kindlePath;            
+        }
 
-            // load listbox with files in default input directory
-            loadBookNames();
+        private void UpdateText(Book book)
+        {
+            int index = lstBooks.Items.IndexOf(book);
+            lstBooks.BeginUpdate();
+            lstBooks.Items[index] = book;
+            lstBooks.EndUpdate();
+        }
+
+        private void SetBookName(object book)
+        {
+            Book b = (Book)book;
+            this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Looking title for book: " + b.FileName); });
+            try
+            {
+                var content = new WebClient().DownloadString("http://www.amazon.com/asd/dp/" + b.FileName.Split(new char[] { '_' })[0] + "/");
+                var title = content.Split(new string[] { "<meta name=\"title\" content=\"Amazon.com: " }, StringSplitOptions.RemoveEmptyEntries)[1].Split(new string[] { ": Kindle Store\" />" }, StringSplitOptions.RemoveEmptyEntries)[0];
+                b.Name = title;
+                this.Invoke((MethodInvoker)delegate() { UpdateText(b); });
+                this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Title found for book: " + b.FileName); });
+            }
+            catch (WebException) { this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Title not found for book " + b.FileName); }); }
+        }
+
+        private void SetBookInfo(Book book)
+        {
+            Match match = fileRegex.Match(book.FilePath);
+            string extension = match.Groups["extension"].Value;
+            if (extension == "azw" || extension == "tpz")
+            {
+                book.FileName = match.Groups["file"] + "." + extension;
+                lstBooks.Items.Add(book);
+                new Thread(new ParameterizedThreadStart(SetBookName)).Start(book);
+            }
         }
 
         private void loadBookNames()
         {
-            lstBooks.Items.Clear();
-            string[] books = Directory.GetFiles(txtInput.Text);
-            foreach (string bookFileName in books)
-            {
-                Match match = fileRegex.Match(bookFileName);
-                string extension = match.Groups["extension"].Value;
-                if (extension == "azw" || extension == "tpz")
-                    lstBooks.Items.Add(match.Groups["file"] + "." + extension);
-            }
+            //lstBooks.Items.Clear();
+            Directory.GetFiles(txtInput.Text).Select(x => new Book() { FilePath = x }).ToList().ForEach(x => SetBookInfo(x));
         }
 
         /************************************************
@@ -94,24 +122,40 @@ namespace SkindleGUI
         private void lstBooks_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lastIndex != lstBooks.SelectedIndex)
-            {
-                getCoverImage(txtInput.Text + lstBooks.SelectedItem);
+            {                
+                new Thread(new ParameterizedThreadStart(getCoverImage)).Start(lstBooks.SelectedItem);                
                 lastIndex = lstBooks.SelectedIndex;
             }
         }
 
-        private void getCoverImage(string bookFileName)
+        private void getCoverImage(object bookObject)
         {
+            if (bookObject == null) return;
             // get the book ID (in form like "B003O86FMW") from the filename (books are stored as "B003O86FMW_EBOK.azw")
-            string book = bookRegex.Match(bookFileName).Groups["book"].Value;
+            //string book = bookRegex.Match((string)bookFileName).Groups["book"].Value;
+            //GetBookNames(book);
+            Book book = (Book)bookObject;
+            string bookId = book.FileName.Split(new char[] { '_' })[0];
 
             // construct URL where book is located
             // this is used both to read from local cache or to get via HTTP
-            string url = "http://ecx.images-amazon.com/images/P/" + book + ".jpg";
+            string url = "http://ecx.images-amazon.com/images/P/" + bookId + ".jpg";
             
             // define variable for holding the book's image
             Image bookImage = null;
 
+            bookImage = GetImageFromLocalCache(bookId);
+            // if book image still null at this point then it means the local cache failed to return image
+            // so we will try to read from web URL via HTTP
+            if (bookImage == null && chkUseInternet.Checked)
+                    bookImage = GetImageFromInternet(bookId);             
+            SetBookCover(bookImage);
+        }
+
+        private Image GetImageFromLocalCache(string book)
+        {
+            Image bookImage = null;
+            string url = "http://ecx.images-amazon.com/images/P/" + book + ".jpg";
             // first try getting the book image from the local disk cache stored in the Kindle for PC local application data
             string kindleCachePath = Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) + "\\Amazon\\Kindle For PC\\Cache\\res\\";
             if (File.Exists(kindleCachePath + "cache.xml"))
@@ -124,7 +168,7 @@ namespace SkindleGUI
                 bool breakLoop = false;
                 string filename = null;
                 while (reader.Read())
-                {                    
+                {
                     switch (reader.NodeType)
                     {
                         case XmlNodeType.Element:
@@ -159,35 +203,39 @@ namespace SkindleGUI
                 if (File.Exists(filename))
                     bookImage = Image.FromFile(filename);
             }
-            // if book image still null at this point then it means the local cache failed to return image
-            // so we will try to read from web URL via HTTP
-            if (bookImage == null)
-            {
-                if (chkUseInternet.Checked == true)
-                {
-                    try
-                    {
-                        bookImage = Image.FromStream(wb.OpenRead(url));
-                    }
-                    catch (WebException ex)
-                    {
-                        MessageBox.Show(ex.ToString(), "WebException Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        picCover.Image = null;
-                        return;
-                    }
-                }
-            }
+            return bookImage;
+        }
 
-            // if we received a book image, either from cache or web, proceed to resize it and put it on form
-            if (bookImage != null)
+        private void SetStatusBarText(string text)
+        {
+            statusBarLabel.Text = text;
+        }
+
+        private Image GetImageFromInternet(string bookid)
+        {
+            this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Looking cover for book: " + bookid); });
+            Image bookImage = null;
+            string url = "http://ecx.images-amazon.com/images/P/" + bookid + ".jpg";
+            try
             {
-                Image resizedImage = bookImage.GetThumbnailImage(picCover.Width, picCover.Height, null, IntPtr.Zero);
-                picCover.Image = resizedImage;
+                bookImage = Image.FromStream(new WebClient().OpenRead(url));
             }
-            else
+            catch (WebException ex)
             {
+                MessageBox.Show(ex.ToString(), "WebException Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Impossible to retreive cover for book: " + bookid); });
                 picCover.Image = null;
+                return null;
             }
+            return bookImage;
+        }
+
+        private void SetBookCover(Image bookImage)
+        {
+            if (bookImage == null) return;
+            Image resizedImage = bookImage.GetThumbnailImage(picCover.Width, picCover.Height, null, IntPtr.Zero);
+            picCover.Image = resizedImage;
+            this.Invoke((MethodInvoker)delegate() { SetStatusBarText("Cover found!"); });
         }
 
         private void btnBrowseOut_Click(object sender, EventArgs e)
@@ -218,7 +266,7 @@ namespace SkindleGUI
             }
 
             // confirm the selected book exists
-            string input = txtInput.Text + lstBooks.SelectedItem;
+            string input = txtInput.Text + ((Book)lstBooks.SelectedItem).FileName;
             if (!File.Exists(input))
             {
                 MessageBox.Show("The selected book filename does not exist. Please restart the program.", "Required Fields Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -317,6 +365,12 @@ namespace SkindleGUI
         {
             // delete temporary "skindle.exe" file
             File.Delete(skindle_path);
+        }
+
+        private void frmMain_Load(object sender, EventArgs e)
+        {
+            // load listbox with files in default input directory
+            loadBookNames();
         }
 
         

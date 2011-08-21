@@ -42,6 +42,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.picCover = new System.Windows.Forms.PictureBox();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.chkUseInternet = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btnBrowseInputFolder = new System.Windows.Forms.Button();
             this.txtInput = new System.Windows.Forms.TextBox();
@@ -53,24 +54,30 @@
             this.btnBrowseInfo = new System.Windows.Forms.Button();
             this.txtInfo = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
-            this.chkUseInternet = new System.Windows.Forms.CheckBox();
+            this.statusBar = new System.Windows.Forms.StatusStrip();
+            this.statusBarLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.panel3 = new System.Windows.Forms.Panel();
             this.tabContainer.SuspendLayout();
             this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picCover)).BeginInit();
             this.tabPage1.SuspendLayout();
+            this.statusBar.SuspendLayout();
+            this.panel1.SuspendLayout();
+            this.panel2.SuspendLayout();
+            this.panel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabContainer
             // 
-            this.tabContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
             this.tabContainer.Controls.Add(this.tabPage2);
             this.tabContainer.Controls.Add(this.tabPage1);
-            this.tabContainer.Location = new System.Drawing.Point(16, 53);
+            this.tabContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabContainer.Location = new System.Drawing.Point(0, 0);
             this.tabContainer.Name = "tabContainer";
             this.tabContainer.SelectedIndex = 0;
-            this.tabContainer.Size = new System.Drawing.Size(527, 546);
+            this.tabContainer.Size = new System.Drawing.Size(556, 547);
             this.tabContainer.TabIndex = 14;
             // 
             // tabPage2
@@ -88,7 +95,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(519, 520);
+            this.tabPage2.Size = new System.Drawing.Size(548, 521);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Main";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -97,7 +104,7 @@
             // 
             this.btnConvert.Location = new System.Drawing.Point(20, 287);
             this.btnConvert.Name = "btnConvert";
-            this.btnConvert.Size = new System.Drawing.Size(479, 39);
+            this.btnConvert.Size = new System.Drawing.Size(508, 39);
             this.btnConvert.TabIndex = 24;
             this.btnConvert.Text = "Convert";
             this.btnConvert.UseVisualStyleBackColor = true;
@@ -122,7 +129,7 @@
             this.txtResults.Name = "txtResults";
             this.txtResults.ReadOnly = true;
             this.txtResults.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtResults.Size = new System.Drawing.Size(479, 142);
+            this.txtResults.Size = new System.Drawing.Size(508, 143);
             this.txtResults.TabIndex = 22;
             // 
             // label5
@@ -142,7 +149,7 @@
             this.lstBooks.Location = new System.Drawing.Point(20, 39);
             this.lstBooks.Name = "lstBooks";
             this.lstBooks.ScrollAlwaysVisible = true;
-            this.lstBooks.Size = new System.Drawing.Size(323, 199);
+            this.lstBooks.Size = new System.Drawing.Size(352, 199);
             this.lstBooks.TabIndex = 20;
             this.lstBooks.SelectedIndexChanged += new System.EventHandler(this.lstBooks_SelectedIndexChanged);
             // 
@@ -150,7 +157,7 @@
             // 
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(346, 14);
+            this.label6.Location = new System.Drawing.Point(375, 14);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(80, 13);
             this.label6.TabIndex = 19;
@@ -159,7 +166,7 @@
             // btnBrowseOut
             // 
             this.btnBrowseOut.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnBrowseOut.Location = new System.Drawing.Point(424, 254);
+            this.btnBrowseOut.Location = new System.Drawing.Point(453, 254);
             this.btnBrowseOut.Name = "btnBrowseOut";
             this.btnBrowseOut.Size = new System.Drawing.Size(75, 23);
             this.btnBrowseOut.TabIndex = 17;
@@ -176,7 +183,7 @@
             this.txtOutput.Enabled = false;
             this.txtOutput.Location = new System.Drawing.Point(164, 256);
             this.txtOutput.Name = "txtOutput";
-            this.txtOutput.Size = new System.Drawing.Size(254, 20);
+            this.txtOutput.Size = new System.Drawing.Size(283, 20);
             this.txtOutput.TabIndex = 16;
             // 
             // label2
@@ -192,7 +199,7 @@
             // 
             this.picCover.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.picCover.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.picCover.Location = new System.Drawing.Point(349, 39);
+            this.picCover.Location = new System.Drawing.Point(378, 39);
             this.picCover.Name = "picCover";
             this.picCover.Size = new System.Drawing.Size(150, 200);
             this.picCover.TabIndex = 18;
@@ -214,10 +221,22 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(519, 520);
+            this.tabPage1.Size = new System.Drawing.Size(548, 521);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Optional Settings";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // chkUseInternet
+            // 
+            this.chkUseInternet.AutoSize = true;
+            this.chkUseInternet.Checked = true;
+            this.chkUseInternet.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkUseInternet.Location = new System.Drawing.Point(9, 145);
+            this.chkUseInternet.Name = "chkUseInternet";
+            this.chkUseInternet.Size = new System.Drawing.Size(254, 17);
+            this.chkUseInternet.TabIndex = 20;
+            this.chkUseInternet.Text = "Use Internet to download book covers if needed";
+            this.chkUseInternet.UseVisualStyleBackColor = true;
             // 
             // label1
             // 
@@ -325,43 +344,81 @@
             // 
             // label8
             // 
-            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.label8.Location = new System.Drawing.Point(13, 9);
+            this.label8.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label8.Location = new System.Drawing.Point(0, 0);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(534, 41);
+            this.label8.Size = new System.Drawing.Size(556, 39);
             this.label8.TabIndex = 15;
             this.label8.Text = resources.GetString("label8.Text");
             // 
-            // chkUseInternet
+            // statusBar
             // 
-            this.chkUseInternet.AutoSize = true;
-            this.chkUseInternet.Checked = true;
-            this.chkUseInternet.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkUseInternet.Location = new System.Drawing.Point(9, 145);
-            this.chkUseInternet.Name = "chkUseInternet";
-            this.chkUseInternet.Size = new System.Drawing.Size(254, 17);
-            this.chkUseInternet.TabIndex = 20;
-            this.chkUseInternet.Text = "Use Internet to download book covers if needed";
-            this.chkUseInternet.UseVisualStyleBackColor = true;
+            this.statusBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.statusBarLabel});
+            this.statusBar.Location = new System.Drawing.Point(0, 3);
+            this.statusBar.Name = "statusBar";
+            this.statusBar.Size = new System.Drawing.Size(556, 22);
+            this.statusBar.TabIndex = 16;
+            this.statusBar.Text = "statusStrip1";
+            // 
+            // statusBarLabel
+            // 
+            this.statusBarLabel.Name = "statusBarLabel";
+            this.statusBarLabel.Size = new System.Drawing.Size(42, 17);
+            this.statusBarLabel.Text = "Ready!";
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.label8);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(556, 39);
+            this.panel1.TabIndex = 17;
+            // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.statusBar);
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel2.Location = new System.Drawing.Point(0, 586);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(556, 25);
+            this.panel2.TabIndex = 18;
+            // 
+            // panel3
+            // 
+            this.panel3.Controls.Add(this.tabContainer);
+            this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel3.Location = new System.Drawing.Point(0, 39);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(556, 547);
+            this.panel3.TabIndex = 19;
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 611);
-            this.Controls.Add(this.label8);
-            this.Controls.Add(this.tabContainer);
+            this.Controls.Add(this.panel3);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.panel1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmMain";
             this.Text = "Skindle GUI";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
+            this.Load += new System.EventHandler(this.frmMain_Load);
             this.tabContainer.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picCover)).EndInit();
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
+            this.statusBar.ResumeLayout(false);
+            this.statusBar.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
+            this.panel3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -393,6 +450,11 @@
         private System.Windows.Forms.TextBox txtInfo;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.CheckBox chkUseInternet;
+        private System.Windows.Forms.StatusStrip statusBar;
+        private System.Windows.Forms.ToolStripStatusLabel statusBarLabel;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Panel panel3;
 
     }
 }
